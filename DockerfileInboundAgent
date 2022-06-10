@@ -1,16 +1,4 @@
-FROM jenkins/inbound-agent:4.3-4
-
-USER root
-
-RUN apt-get update \
-      && apt-get install -y --force-yes sudo \
-      && curl -LO https://dl.k8s.io/release/v1.18.0/bin/linux/amd64/kubectl \
-      && chmod +x kubectl \
-      && mv kubectl /usr/bin/ \
-      && apt-get install -y wget \
-      && apt-get install -y make \
-      && apt-get install -y python3 \
-      && rm -rf /var/lib/apt/lists/*
+FROM uttne/jenkins-agent:4.3-4-base
 
 COPY ["./crane", "/usr/bin/"]
 COPY ["./go", "/usr/local/go"]
