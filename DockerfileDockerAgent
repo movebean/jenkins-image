@@ -1,0 +1,37 @@
+FROM jenkins/jenkins:lts-jdk11
+
+USER root
+
+RUN apt-get update \
+      && apt-get install -y --force-yes sudo \
+      && curl -LO https://dl.k8s.io/release/v1.18.0/bin/linux/amd64/kubectl \
+      && chmod +x kubectl \
+      && mv kubectl /usr/bin/ \
+      && apt-get install wget \
+      && apt-get install make \
+      && sudo apt-get install -y openssh-server \
+      && rm -rf /var/lib/apt/lists/*
+
+RUN echo "jenkins:jenkins" | chpasswd
+RUN sudo sed -i 's|session    required     pam_loginuid.so|session    optional     pam_loginuid.so|g' /etc/pam.d/sshd \
+      && sudo mkdir -p /var/run/sshd \
+
+COPY ["./crane", "/usr/bin/"]
+COPY ["./go", "/usr/local/go"]
+COPY ["./yq", "/usr/local/bin/yq"]
+COPY ["./jq", "/usr/local/bin/jq"]
+
+
+COPY ["./authorized_keys", "/home/jenkins/.ssh/authorized_keys"]
+RUN chown -R jenkins:jenkins /home/jenkins/.ssh/
+# Standard SSH port
+EXPOSE 22
+
+ENV GOROOT=/usr/local/go
+ENV PATH="${GOROOT}/bin:${PATH}"
+
+RUN echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+USER jenkins
+
+CMD ["/usr/sbin/sshd", "-D"]
